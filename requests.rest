@@ -1,0 +1,44 @@
+POST http://localhost:5000/api/users/
+Content-Type: application/json
+
+{
+    "name": "Bob",
+    "email": "bob@email.com",
+    "password": "bob"
+}
+
+###
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "bob@email.com",
+    "password": "bob"
+}
+
+###
+POST http://localhost:5000/api/users/
+Content-Type: application/json
+
+{
+    "name": "Fred",
+    "email": "fred@email.com",
+    "password": "fred"
+}
+
+
+
+###
+
+GET http://localhost:5000/api/users/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODY4NjRjZDMtYTI5OC00MTYyLWEzNDItMDM5N2NmYzZhZGYwIiwidXNlcl9uYW1lIjoiQm9iIiwidXNlcl9lbWFpbCI6ImJvYkBlbWFpbC5jb20iLCJpYXQiOjE2MjIxMjQyNTEsImV4cCI6MTYyMjEyNDI3MX0.vdSKAgz3QFv2asdAuH0Deia6HTNcRNxsIjx5-EiYF6c
+
+
+###
+
+GET http://localhost:5000/api/auth/refresh_token
+
+
+###
+
+DELETE http://localhost:5000/api/auth/refresh_token
