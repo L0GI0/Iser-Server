@@ -1,9 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE DATABASE jwttutorial;
+CREATE DATABASE carnadb;
 
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; // for uuid_generate_v4()
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; /* for uuid_generate_v4() */
 
 CREATE TABLE users (
     user_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

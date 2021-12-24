@@ -13,6 +13,7 @@ router.post("/login", async (req, res) => {
       "SELECT * FROM users WHERE user_email = $1",
       [email]
     );
+    console.log(`Users = ${JSON.stringify(users.rows)}`);
     if (users.rows.length === 0)
       return res.status(401).json({ error: "Email is incorrect" });
     //PASSWORD CHECK
