@@ -17,10 +17,19 @@ router.get("/", authenticateToken, async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const hashedPassword = await bcrypt.hash(req.body.accountPassword, 10);
+    const usersEmail = req.body.accountLogin
+    const emailParts = req.body.accountLogin.split("@");
+    const userType = req.body.accountType;
+
+    console.log(`User type = ${userType}`)
+
+    if(emailParts.length !== 2)
+      throw new Error('Invalid adress email - can not parse user name')
+      
     const newUser = await pool.query(
-      "INSERT INTO users (user_name, user_email, user_password) VALUES($1, $2, $3) RETURNING *",
-      [req.body.name, req.body.email, hashedPassword]
+      "INSERT INTO users (user_name, user_email, user_password, user_type) VALUES($1, $2, $3, $4) RETURNING *",
+      [emailParts[0], usersEmail, hashedPassword, userType]
     );
     res.json({ users: newUser.rows[0] });
   } catch (error) {

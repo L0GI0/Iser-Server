@@ -3,21 +3,25 @@ import pool from "../db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { jwtTokens } from "../utils/jwt-helpers.js";
-
+import { authenticateToken } from "../middleware/authorization.js";
 const router = express.Router();
+
+router.get('/authenticate', authenticateToken, (req, res) => {
+  res.status(200).json({authenticated: true})
+});
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { accountLogin, accountPassword } = req.body;
     const users = await pool.query(
       "SELECT * FROM users WHERE user_email = $1",
-      [email]
+      [accountLogin]
     );
     if (users.rows.length === 0)
       return res.status(401).json({ error: "Email is incorrect" });
     //PASSWORD CHECK
     const isPasswordValid = await bcrypt.compare(
-      password,
+      accountPassword,
       users.rows[0].user_password
     );
     if (!isPasswordValid)
@@ -25,11 +29,13 @@ router.post("/login", async (req, res) => {
 
     //JWT
     let tokens = jwtTokens(users.rows[0]);
+    console.log(`Token = ${JSON.stringify(tokens.accessToken)}`)
     res.cookie("refresh_token", tokens.refreshToken, {
       httpOnly: true,
     });
     res.json(tokens);
   } catch (error) {
+    console.log(`Error when generating tokes = ${JSON.stringify(error.message)}`)
     res.status(401).json({ error: error.message });
   }
 });
@@ -37,7 +43,9 @@ router.post("/login", async (req, res) => {
 router.get("/refresh_token", (req, res) => {
   try {
     const refreshToken = req.cookies.refresh_token;
-    if (refreshToken === null)
+    // console.log(`Cookies = ${JSON.stringify(req.cookies)}`)
+    // console.log(`Refresh token = ${refreshToken}`)
+    if (!refreshToken)
       return res.status(401).json({ error: "Null refresh token" });
     jwt.verify(
       refreshToken,
