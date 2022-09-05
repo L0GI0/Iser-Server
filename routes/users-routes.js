@@ -24,6 +24,8 @@ router.post("/", async (req, res) => {
 
     console.log(`User type = ${userType}`)
 
+    console.log(`Req user = ${JSON.stringify(req.user)}`)
+
     if(emailParts.length !== 2)
       throw new Error('Invalid adress email - can not parse user name')
       

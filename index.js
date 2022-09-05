@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser"; // cos we are using cookies
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import usersRouter from "./routes/users-routes.js";
+import profileRoutes from './routes/profile-routes.js';
 import authRouter from "./routes/auth-routes.js";
 
 dotenv.config(); // it will look for .env file pull any enviramental variables from that file
@@ -24,6 +25,7 @@ app.use("/", express.static(join(__dirname, "public"))); // this is saying that 
 // to put static files in a folder public
 
 app.use("/api/users", usersRouter);
+app.use("/api/profile", profileRoutes);
 app.use("/api/auth", authRouter);
 
 app.listen(PORT, () => console.log(`Server is listening on ${PORT}`));
