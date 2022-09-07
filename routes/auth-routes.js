@@ -17,25 +17,47 @@ router.post("/login", async (req, res) => {
       "SELECT * FROM users WHERE user_email = $1",
       [accountLogin]
     );
+
+    const user = users.rows[0];
+
     if (users.rows.length === 0)
       return res.status(401).json({ error: "Email is incorrect" });
     //PASSWORD CHECK
     const isPasswordValid = await bcrypt.compare(
       accountPassword,
-      users.rows[0].user_password
+      user.user_password
     );
     if (!isPasswordValid)
       return res.status(401).json({ error: "Incorrect password" });
 
     //JWT
-    let tokens = jwtTokens(users.rows[0]);
-    console.log(`Token = ${JSON.stringify(tokens.accessToken)}`)
+    let tokens = jwtTokens(user);
     res.cookie("refresh_token", tokens.refreshToken, {
       httpOnly: true,
     });
-    res.json(tokens);
+
+    const profile = (await pool.query(`SELECT
+      first_name,
+      last_name,
+      gend,
+      to_char(birth_date, 'MM/DD/YYYY') as birth_date,
+      location,
+      language,
+      role from profiles WHERE profile_id = '${user.user_id}'`)).rows[0];
+
+    res.json({
+      tokens: { ...tokens },
+      profile: {
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        gender: profile.gend,
+        birthDate: profile.birth_date,
+        location: profile.location,
+        language: profile.language,
+        role: profile.role
+      }});
   } catch (error) {
-    console.log(`Error when generating tokes = ${JSON.stringify(error.message)}`)
+    g(`Error when generating tokes = ${JSON.stringify(error.message)}`)
     res.status(401).json({ error: error.message });
   }
 });
@@ -43,8 +65,6 @@ router.post("/login", async (req, res) => {
 router.get("/refresh_token", (req, res) => {
   try {
     const refreshToken = req.cookies.refresh_token;
-    // console.log(`Cookies = ${JSON.stringify(req.cookies)}`)
-    // console.log(`Refresh token = ${refreshToken}`)
     if (!refreshToken)
       return res.status(401).json({ error: "Null refresh token" });
     jwt.verify(
@@ -52,12 +72,12 @@ router.get("/refresh_token", (req, res) => {
       process.env.REFRESH_TOKEN_SECRET,
       (error, user) => {
         if (error) return res.status(403).json({ error: error.message });
-        let tokens = jwtTokens(user);
+        const tokens = jwtTokens(user);
 
         res.cookie("refresh_token", tokens.refreshToken, {
           httpOnly: true,
         });
-        res.json(tokens);
+        res.json({tokens: { accessToken: tokens.accessToken }});
       }
     );
   } catch (error) {

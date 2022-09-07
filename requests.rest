@@ -1,10 +1,11 @@
+###
 POST http://localhost:5000/api/users/
 Content-Type: application/json
 
 {
     "name": "Bob",
     "email": "bob@email.com",
-    "password": "bob"
+    "password": "Bob09901221"
 }
 
 ###
@@ -12,8 +13,8 @@ POST http://localhost:5000/api/auth/login
 Content-Type: application/json
 
 {
-    "email": "bob@email.com",
-    "password": "bob"
+    "email": "bob2@email.com",
+    "password": "Bob209901221"
 }
 
 ###
@@ -26,19 +27,39 @@ Content-Type: application/json
     "password": "fred"
 }
 
+###
+POST http://localhost:5000/api/profile/
+
+Payload:
+{
+    "firstName": "Bob",
+    "lastName": "Smith",
+    "gender": "Male",
+    "birthDate": "01-01-1900",
+    "location": "New York",
+    "language: "en-GB",
+    "role": "Software Engineer"
+}
+
+###
+GET http://localhost:5000/api/profile/all
 
 
 ###
-
 GET http://localhost:5000/api/users/
+
+Payload:
+{
+    "email": "bob2@email.com",
+    "password": "Bob209901221"
+}
+
+Response:
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiODY4NjRjZDMtYTI5OC00MTYyLWEzNDItMDM5N2NmYzZhZGYwIiwidXNlcl9uYW1lIjoiQm9iIiwidXNlcl9lbWFpbCI6ImJvYkBlbWFpbC5jb20iLCJpYXQiOjE2MjIxMjQyNTEsImV4cCI6MTYyMjEyNDI3MX0.vdSKAgz3QFv2asdAuH0Deia6HTNcRNxsIjx5-EiYF6c
 
 
 ###
-
 GET http://localhost:5000/api/auth/refresh_token
 
-
 ###
-
 DELETE http://localhost:5000/api/auth/refresh_token

@@ -10,7 +10,6 @@ router.get("/", authenticateToken, async (req, res) => {
     const users = await pool.query("SELECT * FROM users");
     res.json({ users: users.rows });
   } catch (error) {
-    console.log(`Error = ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 });
@@ -21,8 +20,6 @@ router.post("/", async (req, res) => {
     const usersEmail = req.body.accountLogin
     const emailParts = req.body.accountLogin.split("@");
     const userType = req.body.accountType;
-
-    console.log(`User type = ${userType}`)
 
     if(emailParts.length !== 2)
       throw new Error('Invalid adress email - can not parse user name')
