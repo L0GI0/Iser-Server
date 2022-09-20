@@ -10,14 +10,14 @@ router.get("/all", authenticateToken, async (req, res) => {
     users.user_id AS "userId",
     profiles.first_name AS "firstName",
     profiles.last_name AS "lastName",
-    profiles.gend as gender,
+    profiles.gend AS gender,
     profiles.birth_date AS "birthDate",
     profiles.location,
     profiles.language,
     profiles.role,
-    users.user_email as "userEmail",
-    users.user_type as "userType",
-    users.user_status as "userStatus"
+    users.user_email AS "emailAddress",
+    users.user_type AS "userType",
+    users.user_status AS "userStatus"
     FROM profiles INNER JOIN users ON users.user_id=profiles.profile_id`);
 
     res.json({ users: profiles.rows });
