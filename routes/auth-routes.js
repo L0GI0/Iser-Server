@@ -21,14 +21,18 @@ router.post("/login", async (req, res) => {
     const user = users.rows[0];
 
     if (users.rows.length === 0)
-      return res.status(401).json({ error: "Email is incorrect" });
+      return res.status(401).json({ requestStatus: "unauthorised" });
+
+    if (users.rows[0].user_status === 'banned'){
+      return res.status(401).json({ requestStatus: "forbidden" });
+    }
     //PASSWORD CHECK
     const isPasswordValid = await bcrypt.compare(
       accountPassword,
       user.user_password
     );
     if (!isPasswordValid)
-      return res.status(401).json({ error: "Incorrect password" });
+      return res.status(401).json({ requestStatus: "unauthorised" });
 
     //JWT
     let tokens = jwtTokens(user);
@@ -37,32 +41,26 @@ router.post("/login", async (req, res) => {
     });
 
     const profile = (await pool.query(`SELECT
-      first_name,
-      last_name,
-      gend,
-      to_char(birth_date, 'MM/DD/YYYY') as birth_date,
+      first_name AS "firstName",
+      last_name AS "lastName",
+      gend AS "gender",
+      to_char(birth_date, 'MM/DD/YYYY') AS "birthDate",
       location,
       language,
-      role from profiles WHERE profile_id = '${user.user_id}'`)).rows[0];
+      role
+      FROM profiles WHERE profile_id = '${user.user_id}'`)).rows[0];
 
     res.json({
       tokens: { ...tokens },
-      profile: {
-        firstName: profile.first_name,
-        lastName: profile.last_name,
-        gender: profile.gend,
-        birthDate: profile.birth_date,
-        location: profile.location,
-        language: profile.language,
-        role: profile.role
-      }});
+      profile: { ...profile },
+      userType: user.user_type
+    });
   } catch (error) {
-    g(`Error when generating tokes = ${JSON.stringify(error.message)}`)
-    res.status(401).json({ error: error.message });
+    res.status(401).json({ requestStatus: 'failed', error: error.message });
   }
 });
 
-router.get("/refresh_token", (req, res) => {
+router.get("/refresh_token", async (req, res) => {
   try {
     const refreshToken = req.cookies.refresh_token;
     if (!refreshToken)
@@ -70,14 +68,22 @@ router.get("/refresh_token", (req, res) => {
     jwt.verify(
       refreshToken,
       process.env.REFRESH_TOKEN_SECRET,
-      (error, user) => {
-        if (error) return res.status(403).json({ error: error.message });
-        const tokens = jwtTokens(user);
+      async (error, user) => {
+        if (error ) return res.status(403).json({ error: error.message });
+        
+        const updatedUserData = (await pool.query(
+          `SELECT * FROM users WHERE user_id = '${user.user_id}'`)).rows[0];
+
+        if (updatedUserData.user_status === 'banned') return res.status(403).json({ error: 'Account banned', requestStatus: 'forbidden' });
+          
+        const tokens = jwtTokens(updatedUserData);
 
         res.cookie("refresh_token", tokens.refreshToken, {
           httpOnly: true,
         });
-        res.json({tokens: { accessToken: tokens.accessToken }});
+        res.json({
+          tokens: { accessToken: tokens.accessToken },
+          user: { userType: updatedUserData.user_type }});
       }
     );
   } catch (error) {
@@ -88,7 +94,7 @@ router.get("/refresh_token", (req, res) => {
 router.delete("/refresh_token", (req, res) => {
   try {
     res.clearCookie("refresh_token");
-    return res.status(200).json({ message: "refresh token deleted." });
+    return res.status(200).json({ message: "refresh token deleted" });
   } catch (error) {
     res.status(401).json({ error: error.message });
   }
