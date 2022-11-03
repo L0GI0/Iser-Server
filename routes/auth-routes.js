@@ -40,20 +40,24 @@ router.post("/login", async (req, res) => {
       httpOnly: true,
     });
 
-    const profile = (await pool.query(`SELECT
-      first_name AS "firstName",
-      last_name AS "lastName",
-      gend AS "gender",
-      to_char(birth_date, 'MM/DD/YYYY') AS "birthDate",
-      location,
-      language,
-      role
-      FROM profiles WHERE profile_id = '${user.user_id}'`)).rows[0];
+    const account = (await pool.query(`SELECT
+    users.user_id AS "userId",
+    profiles.first_name AS "firstName",
+    profiles.last_name AS "lastName",
+    profiles.gend AS gender,
+    to_char(profiles.birth_date, 'MM/DD/YYYY') AS "birthDate",
+    profiles.location,
+    profiles.language,
+    profiles.role,
+    users.user_email AS "emailAddress",
+    users.user_type AS "userType",
+    users.user_status AS "userStatus"
+    FROM profiles INNER JOIN users ON users.user_id=profiles.profile_id
+    WHERE user_id = '${user.user_id}'`)).rows[0];
 
     res.json({
       tokens: { ...tokens },
-      profile: { ...profile },
-      userType: user.user_type
+      account: account,
     });
   } catch (error) {
     res.status(401).json({ requestStatus: 'failed', error: error.message });

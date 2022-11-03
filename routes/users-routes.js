@@ -14,12 +14,70 @@ router.get("/", authenticateToken, async (req, res) => {
   }
 });
 
+router.get("/:id", authenticateToken, async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const user = await pool.query(`SELECT
+    users.user_id AS "userId",
+    profiles.first_name AS "firstName",
+    profiles.last_name AS "lastName",
+    profiles.gend AS gender,
+    to_char(profiles.birth_date, 'MM/DD/YYYY') AS "birthDate",
+    profiles.location,
+    profiles.language,
+    profiles.role,
+    users.user_email AS "emailAddress",
+    users.user_type AS "userType",
+    users.user_status AS "userStatus"
+    FROM profiles INNER JOIN users ON users.user_id=profiles.profile_id
+    WHERE user_id = '${userId}'`);
+
+    if (user.rows.length === 0)
+      return res.status(404).json({ requestStatus: "failed" });
+
+    res.json({ user: user.rows[0] });
+  } catch (error) {
+    if(error.message.includes('invalid input syntax for type uuid')){
+      res.status(404).json({ error: error.message, requestStatus: "failed" });
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.put("/ban/:id", [authenticateToken, authoriseForAdminUsers], async (req, res) => {
   try {
 
     const userId = req.params.id;
 
     const user = (await pool.query(`UPDATE users SET user_status = 'banned' WHERE user_id = '${userId}' RETURNING *`)).rows[0];
+
+    res.status(200).json({ user: { emailAddress: user.user_email} });
+  } catch (error) {
+    res.status(500).json({ error: error.message, requestStatus: 'failed' });
+  }
+});
+
+router.put("/unban/:id", [authenticateToken, authoriseForAdminUsers], async (req, res) => {
+  try {
+
+    const userId = req.params.id;
+
+    const user = (await pool.query(`UPDATE users SET user_status = 'active' WHERE user_id = '${userId}' RETURNING *`)).rows[0];
+
+    res.status(200).json({ user: { emailAddress: user.user_email} });
+  } catch (error) {
+    res.status(500).json({ error: error.message, requestStatus: 'failed' });
+  }
+});
+
+
+router.put("/permissions/:id", [authenticateToken, authoriseForAdminUsers], async (req, res) => {
+  try {
+
+    const userId = req.params.id;
+    const targetUserType = req.body.targetUserType;
+
+    const user = (await pool.query(`UPDATE users SET user_type = '${targetUserType}' WHERE user_id = '${userId}' RETURNING *`)).rows[0];
 
     res.status(200).json({ user: { emailAddress: user.user_email} });
   } catch (error) {
