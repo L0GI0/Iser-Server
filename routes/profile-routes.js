@@ -56,12 +56,44 @@ router.post("/", authenticateToken, async (req, res) => {
     await pool.query(
       `UPDATE profiles SET first_name = $1, last_name = $2, gend = $3, birth_date = $4, location = $5, language = $6, role = $7 WHERE profile_id = '${user_id}'`,
       [firstName, lastName, gender, birthDate, location, language, role]
-    );
+    )
     res.json({ status: 200 });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-
 });
+
+router.post("/:id", authenticateToken, async (req, res) => {
+  try {
+
+    const userId = req.params.id;
+
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const gender = req.body.gender;
+    const birthDate = req.body.birthDate;
+    const location = req.body.location;
+    const language = req.body.language;
+    const role = req.body.role;
+
+
+    const updatedProfile = (await pool.query(
+      `UPDATE profiles SET first_name = $1, last_name = $2, gend = $3, birth_date = $4, location = $5, language = $6, role = $7 WHERE profile_id = '${userId}' RETURNING 
+        first_name AS "firstName",
+        last_name AS "lastName",
+        gend AS gender,
+        to_char(birth_date, 'MM/DD/YYYY') AS "birthDate",
+        location,
+        language,
+        role`,
+      [firstName, lastName, gender, birthDate, location, language, role]
+    )).rows[0];
+    
+    res.status(200).json({ profile: updatedProfile });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 export default router;
