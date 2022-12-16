@@ -14,8 +14,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url)); // need when using st
 
 const app = express();
 const PORT = process.env.PORT || 5000; // gives the port in a env variable called PORT e.g at HEROKU
-const corsOptions = { credentials: true, origin: process.env.URL || "*" }; // URL for origin
+const corsOptions = { credentials: true, origin: process.env.APP_BASE_URL || "*" }; // URL for origin
 // star means that anything can access your API
+
+console.log(`Cors options = ${JSON.stringify(corsOptions)}`);
 
 app.use(cors(corsOptions));
 app.use(json());
