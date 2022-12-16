@@ -12,7 +12,7 @@ let localPoolConfig = {
   password: dbPassword,
   host: "localhost",
   port: "5432",
-  database: "carnadb",
+  database: "iserdb",
 };
 
 const poolConfig = process.env.DATABASE_URL
@@ -25,3 +25,4 @@ const poolConfig = process.env.DATABASE_URL
 const pool = new Pool(poolConfig);
 
 export default pool;
+``
