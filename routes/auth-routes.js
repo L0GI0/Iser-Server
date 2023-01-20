@@ -38,6 +38,9 @@ router.post("/login", async (req, res) => {
     let tokens = jwtTokens(user);
     res.cookie("refresh_token", tokens.refreshToken, {
       httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      domain: "iser-server.vercel.app"
     });
 
     const account = (await pool.query(`SELECT
@@ -56,7 +59,7 @@ router.post("/login", async (req, res) => {
     WHERE user_id = '${user.user_id}'`)).rows[0];
 
     res.json({
-      tokens: { ...tokens },
+      tokens: { accessToken: tokens.accessToken },
       account: account,
     });
   } catch (error) {
@@ -84,6 +87,9 @@ router.get("/refresh_token", async (req, res) => {
 
         res.cookie("refresh_token", tokens.refreshToken, {
           httpOnly: true,
+          sameSite: "none",
+          secure: true,
+          domain: "iser-server.vercel.app"
         });
         res.json({
           tokens: { accessToken: tokens.accessToken },

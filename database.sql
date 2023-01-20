@@ -19,11 +19,6 @@ CREATE TABLE users (
     user_status user_status
 );
 
-SELECT * FROM users;
-
-INSERT INTO users (user_name, user_email, user_password, user_type) VALUES ('Bob', 'bob@email.com', 'bob');
-INSERT INTO users (user_name, user_email, user_password, user_type) VALUES ('Fred', 'fred@email.com', 'fred');
-
 /* User profile: */
 
 CREATE DOMAIN gender VARCHAR(25) CHECK( value in ('Famale', 'Male', 'Other'));
