@@ -49,10 +49,20 @@ router.put("/ban/:id", [authenticateToken, authoriseForAdminUsers], async (req, 
 
     const userId = req.params.id;
 
+    const currentUserId = req.user.user_id;
+
+    if(userId === currentUserId){
+      throw new Error('same user');
+    }
+
     const user = (await pool.query(`UPDATE users SET user_status = 'banned' WHERE user_id = '${userId}' RETURNING *`)).rows[0];
 
     res.status(200).json({ user: { emailAddress: user.user_email} });
   } catch (error) {
+    if(error.message === 'same user'){
+      res.status(405).json({ error: error.message, requestStatus: 'forbidden' });
+      return
+    }
     res.status(500).json({ error: error.message, requestStatus: 'failed' });
   }
 });
@@ -75,12 +85,24 @@ router.put("/permissions/:id", [authenticateToken, authoriseForAdminUsers], asyn
   try {
 
     const userId = req.params.id;
+
+    const currentUserId = req.user.user_id;
+
+    if(userId === currentUserId){
+      throw new Error('same user');
+    }
+
+
     const targetUserType = req.body.targetUserType;
 
     const user = (await pool.query(`UPDATE users SET user_type = '${targetUserType}' WHERE user_id = '${userId}' RETURNING *`)).rows[0];
 
     res.status(200).json({ user: { emailAddress: user.user_email} });
   } catch (error) {
+    if(error.message === 'same user'){
+      res.status(405).json({ error: error.message, requestStatus: 'forbidden' });
+      return
+    }
     res.status(500).json({ error: error.message, requestStatus: 'failed' });
   }
 });
@@ -91,6 +113,12 @@ router.delete("/:id", [authenticateToken, authoriseForAdminUsers], async (req, r
   try {
 
     const userId = req.params.id;
+
+    const currentUserId = req.user.user_id;
+
+    if(userId === currentUserId){
+      throw new Error('same user');
+    }
 
     await dbClient.query('BEGIN');
 
@@ -103,6 +131,10 @@ router.delete("/:id", [authenticateToken, authoriseForAdminUsers], async (req, r
     res.status(200).json({ user: { emailAddress: removedUser.user_email} });
   } catch (error) {
     await dbClient.query('ROLLBACK');
+    if(error.message === 'same user'){
+      res.status(405).json({ error: error.message, requestStatus: 'forbidden' });
+      return
+    }
     res.status(500).json({ error: error.message, requestStatus: 'failed' });
   } finally {
     await dbClient.release();
@@ -112,10 +144,10 @@ router.delete("/:id", [authenticateToken, authoriseForAdminUsers], async (req, r
 router.post("/", async (req, res) => {
   
   const dbClient = await pool.connect();
+  const usersEmail = req.body.accountLogin
 
   try {
     const hashedPassword = await bcrypt.hash(req.body.accountPassword, 10);
-    const usersEmail = req.body.accountLogin
     const emailParts = req.body.accountLogin.split("@");
     const userType = req.body.userType;
 
@@ -149,6 +181,10 @@ router.post("/", async (req, res) => {
     res.status(200).json({ users: { emailAddress: usersEmail } });
   } catch (error) {
     await dbClient.query('ROLLBACK');
+    if(error.message.includes(`duplicate key`)){
+      res.status(409).json({ error: error.message, requestStatus: 'forbidden', user: { emailAddress: usersEmail}});
+      return
+    }
     res.status(500).json({ error: error.message });
   } finally {
     await dbClient.release();
