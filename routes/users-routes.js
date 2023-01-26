@@ -16,6 +16,7 @@ router.get("/", authenticateToken, async (req, res) => {
 
 router.get("/:id", authenticateToken, async (req, res) => {
   const userId = req.params.id;
+
   try {
     const user = await pool.query(`SELECT
     users.user_id AS "userId",
@@ -33,12 +34,12 @@ router.get("/:id", authenticateToken, async (req, res) => {
     WHERE user_id = '${userId}'`);
 
     if (user.rows.length === 0)
-      return res.status(404).json({ requestStatus: "failed" });
+      return res.status(404).json({ requestStatus: "not_found" });
 
     res.json({ user: user.rows[0] });
   } catch (error) {
     if(error.message.includes('invalid input syntax for type uuid')){
-      res.status(404).json({ error: error.message, requestStatus: "failed" });
+      return res.status(404).json({ error: error.message, requestStatus: "not_found" });
     }
     res.status(500).json({ error: error.message });
   }
@@ -60,8 +61,7 @@ router.put("/ban/:id", [authenticateToken, authoriseForAdminUsers], async (req, 
     res.status(200).json({ user: { emailAddress: user.user_email} });
   } catch (error) {
     if(error.message === 'same user'){
-      res.status(405).json({ error: error.message, requestStatus: 'forbidden' });
-      return
+      return res.status(405).json({ error: error.message, requestStatus: 'forbidden' });
     }
     res.status(500).json({ error: error.message, requestStatus: 'failed' });
   }
@@ -100,8 +100,7 @@ router.put("/permissions/:id", [authenticateToken, authoriseForAdminUsers], asyn
     res.status(200).json({ user: { emailAddress: user.user_email} });
   } catch (error) {
     if(error.message === 'same user'){
-      res.status(405).json({ error: error.message, requestStatus: 'forbidden' });
-      return
+      return res.status(405).json({ error: error.message, requestStatus: 'forbidden' });
     }
     res.status(500).json({ error: error.message, requestStatus: 'failed' });
   }
@@ -132,8 +131,7 @@ router.delete("/:id", [authenticateToken, authoriseForAdminUsers], async (req, r
   } catch (error) {
     await dbClient.query('ROLLBACK');
     if(error.message === 'same user'){
-      res.status(405).json({ error: error.message, requestStatus: 'forbidden' });
-      return
+      return res.status(405).json({ error: error.message, requestStatus: 'forbidden' });
     }
     res.status(500).json({ error: error.message, requestStatus: 'failed' });
   } finally {
@@ -182,8 +180,7 @@ router.post("/", async (req, res) => {
   } catch (error) {
     await dbClient.query('ROLLBACK');
     if(error.message.includes(`duplicate key`)){
-      res.status(409).json({ error: error.message, requestStatus: 'forbidden', user: { emailAddress: usersEmail}});
-      return
+      return res.status(409).json({ error: error.message, requestStatus: 'forbidden', user: { emailAddress: usersEmail}});
     }
     res.status(500).json({ error: error.message });
   } finally {
